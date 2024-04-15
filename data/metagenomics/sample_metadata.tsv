@@ -1,0 +1,86 @@
+sample	species	region	habitat	latitude	longitude	lifestage	sex
+E01	Eb	Arid	Nat	30.80479	34.85322		
+E02	Eb	Arid	Nat	30.94398	35.07323	adult	male
+E03	Eb	Arid	Nat	30.94398	35.07323	adult	female
+E16	Eb	Arid	Anth	30.00946	35.09695	adult	male
+E18	Eb	Arid	Anth	30.00946	35.09695	adult	female
+E21	Eb	Arid	Anth	30.00946	35.09695		
+E24	Eb	Arid	Nat	30.04847	35.08011		
+E25	Eb	Arid	Nat	30.04847	35.08011	adult	female
+E27	Eb	Arid	Nat	30.04847	35.08011	juvenile	female
+E28	Eb	Arid	Nat	30.04847	35.08011		
+E30	Eb	Arid	Anth	29.82104	35.03658	adult	male
+E31	Eb	Arid	Anth	29.82104	35.03658	adult	female
+E34	Eb	Arid	Nat	30.04847	35.08011	adult	female
+E38	Eb	Arid	Nat	30.04847	35.08011	adult	female
+E43	Eb	Arid	Nat	30.60219	34.93769		
+E44	Eb	Arid	Anth	30.37134	35.15411	adult	female
+E45	Eb	Arid	Anth	30.37134	35.15411		
+E48	Eb	Arid	Anth	30.37134	35.15411	adult	female
+E49	Eb	Arid	Anth	30.37134	35.15411	adult	female
+E56	Eb	Arid	Anth	30.84797	34.78022	adult	male
+E58	Eb	Arid	Nat	30.60219	34.93769	adult	male
+H04	Ha	Arid	Anth	30.956	35.36392	adult	female
+H06	Ha	Arid	Anth	30.956	35.36392	adult	female
+H07	Ha	Arid	Anth	30.956	35.36392	adult	female
+H08	Ha	Arid	Nat	30.94398	35.07323	adult	male
+H09	Ha	Arid	Nat	30.60219	34.93769	adult	male
+H10	Ha	Arid	Nat	30.60219	34.93769	adult	male
+H12	Ha	Arid	Nat	30.60219	34.93769	juvenile	female
+H15	Ha	Arid	Nat	30.04847	35.08011		
+H16	Ha	Arid	Nat	30.60219	34.93769	adult	female
+H19	Ha	Arid	Nat	30.07258	34.82869	adult	female
+H20	Ha	Arid	Nat	30.07258	34.82869	adult	female
+H23	Ha	Arid	Nat	30.07258	34.82869	adult	female
+H25	Ha	Arid	Nat	30.07258	34.82869	adult	female
+H30	Ha	Arid	Nat	30.04847	35.08011	adult	female
+H31	Ha	Arid	Anth	30.37134	35.15411		
+H32	Ha	Arid	Anth	30.37134	35.15411	adult	male
+H34	Ha	Arid	Nat	30.81726	35.28288	adult	female
+H37	Ha	Arid	Nat	30.93769	35.04099	adult	male
+H38	Ha	Arid	Nat	30.93769	35.04099	adult	female
+H39	Ha	Arid	Nat	30.93769	35.04099	adult	male
+H40	Ha	Arid	Nat	30.93769	35.04099	adult	male
+H43	Ha	Arid	Anth	30.956	35.36392	adult	female
+H45	Ha	Arid	Anth	30.956	35.36392	adult	female
+H47	Ha	Arid	Anth	30.956	35.36392	adult	male
+P01	Pk	Arid	Anth	30.85377	34.78443	adult	female
+P04	Pk	Arid	Anth	30.84797	34.78022	juvenile	male
+P05	Pk	Arid	Anth	30.84797	34.78022	adult	male
+P08	Pk	Arid	Anth	30.84797	34.78022	adult	male
+P09	Pk	Arid	Anth	30.84797	34.78022	adult	female
+P10	Pk	Arid	Anth	30.84797	34.78022	adult	male
+P14	Pk	Arid	Anth	30.84797	34.78022	adult	male
+P17	Pk	Arid	Anth	30.84797	34.78022	adult	female
+P20	Pk	Arid	Nat	30.81465	34.81362		
+P24	Pk	Arid	Anth	30.9899	34.89813	adult	female
+P25	Pk	Arid	Anth	30.85377	34.78443	adult	female
+P27	Pk	Arid	Anth	30.85377	34.78443	adult	male
+P28	Pk	Arid	Anth	30.85377	34.78443		
+P33	Pk	Arid	Anth	30.9899	34.89813	adult	female
+P34	Pk	Arid	Anth	30.9899	34.89813	adult	female
+P36	Pk	Arid	Nat	30.81465	34.81362	adult	female
+P41	Pk	Arid	Anth	30.9899	34.89813	unknown	unknown
+P43	Pk	Arid	Anth	30.9899	34.89813	adult	male
+P45	Pk	Arid	Anth	29.57374	34.97178	adult	female
+P47	Pk	Arid	Anth	30.84797	34.78022	adult	male
+P48	Pk	Arid	Anth	30.84797	34.78022	adult	female
+P49	Pk	Med	Med	31.62847	34.79969		
+P51	Pk	Med	Med	31.62847	34.79969	adult	male
+P52	Pk	Med	Med	32.4523	34.95517	adult	female
+P53	Pk	Med	Med	32.4523	34.95517	adult	female
+P54	Pk	Med	Med	32.4523	34.95517		
+P56	Pk	Arid	Anth	29.57374	34.97178		
+P58	Pk	Arid	Anth	29.57374	34.97178	juvenile	female
+P60	Pk	Arid	Anth	29.57374	34.97178	adult	female
+P64	Pk	Arid	Anth	30.84797	34.78022	adult	female
+P65	Pk	Arid	Anth	30.84797	34.78022	adult	male
+P66	Pk	Med	Med	32.4523	34.95517		
+P67	Pk	Med	Med	32.4523	34.95517	adult	female
+P68	Pk	Med	Med	32.4523	34.95517	adult	female
+P69	Pk	Med	Med	32.4523	34.95517		
+P71	Pk	Med	Med	31.62847	34.79969	adult	male
+P72	Pk	Med	Med	31.62847	34.79969	adult	male
+P75	Pk	Med	Med	31.62847	34.79969	adult	male
+P78	Pk	Med	Med	31.62847	34.79969		
+P79	Pk	Med	Med	31.62847	34.79969	adult	female
