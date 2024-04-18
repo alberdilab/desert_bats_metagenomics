@@ -1,0 +1,311 @@
+# Diversity
+
+```{r load_data_diversity, message=FALSE, warning=FALSE}
+load("data/data.Rdata")
+```
+
+## Alpha diversity
+
+```{r alpha_div, comment="", message=FALSE, warning=FALSE}
+# Calculate Hill numbers
+richness <- genome_counts_filt %>%
+  column_to_rownames(var = "genome") %>%
+  dplyr::select(where(~ !all(. == 0))) %>%
+  hilldiv(., q = 0) %>%
+  t() %>%
+  as.data.frame() %>%
+  dplyr::rename(richness = 1) %>%
+  rownames_to_column(var = "sample")
+
+neutral <- genome_counts_filt %>%
+  column_to_rownames(var = "genome") %>%
+  dplyr::select(where(~ !all(. == 0))) %>%
+  hilldiv(., q = 1) %>%
+  t() %>%
+  as.data.frame() %>%
+  dplyr::rename(neutral = 1) %>%
+  rownames_to_column(var = "sample")
+
+phylogenetic <- genome_counts_filt %>%
+  column_to_rownames(var = "genome") %>%
+  dplyr::select(where(~ !all(. == 0))) %>%
+  hilldiv(., q = 1, tree = genome_tree) %>%
+  t() %>%
+  as.data.frame() %>%
+  dplyr::rename(phylogenetic = 1) %>%
+  rownames_to_column(var = "sample")
+
+# Aggregate basal GIFT into elements
+dist <- genome_gifts %>%
+  to.elements(., GIFT_db) %>%
+  traits2dist(., method = "gower")
+
+functional <- genome_counts_filt %>%
+  filter(genome %in% labels(dist)[[1]]) %>%
+  column_to_rownames(var = "genome") %>%
+  dplyr::select(where(~ !all(. == 0))) %>%
+  hilldiv(., q = 1, dist = dist) %>%
+  t() %>%
+  as.data.frame() %>%
+  dplyr::rename(functional = 1) %>%
+  rownames_to_column(var = "sample") %>%
+  mutate(functional = if_else(is.nan(functional), 1, functional))
+
+# Merge all metrics
+alpha_div <- richness %>%
+  full_join(neutral, by = join_by(sample == sample)) %>%
+  full_join(phylogenetic, by = join_by(sample == sample)) %>%
+  full_join(functional, by = join_by(sample == sample))
+```
+
+```{r alpha_div_plot, comment="", message=FALSE, warning=FALSE, fig.height=3, fig.width=10, fig.fullwidth=TRUE}
+alpha_div %>%
+  pivot_longer(-sample, names_to = "metric", values_to = "value") %>%
+  left_join(., sample_metadata, by = join_by(sample == sample)) %>%
+  mutate(metric=factor(metric,levels=c("richness","neutral","phylogenetic","functional"))) %>%
+      ggplot(aes(y = value, x = species, group=species, color=species, fill=species)) +
+      geom_boxplot(outlier.shape = NA) +
+      geom_jitter(alpha=0.5) +
+      scale_color_manual(name="Species",
+          breaks=c("Pk","Eb","Ha"),
+          labels=c("Pipistrellus kuhlii","Eptesicus bottaew","Hipsugo ariel"),
+          values=c("#e5bd5b", "#6b7398","#e2815a")) +
+      scale_fill_manual(name="Species",
+          breaks=c("Pk","Eb","Ha"),
+          labels=c("Pipistrellus kuhlii","Eptesicus bottaew","Hipsugo ariel"),
+          values=c("#e5bd5b50", "#6b739850","#e2815a50")) +
+      facet_wrap(. ~ metric, scales = "free", ncol=4) +
+      coord_cartesian(xlim = c(1, NA)) +
+      theme_classic() +
+      theme(
+        strip.background = element_blank(),
+        panel.grid.minor.x = element_line(size = .1, color = "grey"),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.x = element_blank())
+```
+
+## Beta diversity
+
+```{r beta_div, comment="", message=FALSE, warning=FALSE}
+beta_q0n <- genome_counts %>%
+  select(where(~!all(. == 0))) %>% # remove empty samples
+  column_to_rownames(., "genome") %>%
+  hillpair(., q = 0)
+
+beta_q1n <- genome_counts %>%
+  select(where(~!all(. == 0))) %>% # remove empty samples
+  column_to_rownames(., "genome") %>%
+  hillpair(., q = 1)
+
+beta_q1p <- genome_counts %>%
+  select(where(~!all(. == 0))) %>% # remove empty samples
+  column_to_rownames(., "genome") %>%
+  hillpair(., q = 1, tree = genome_tree)
+
+beta_q1f <- genome_counts %>%
+  select(where(~!all(. == 0))) %>% # remove empty samples
+  filter(genome %in% labels(dist)[[1]]) %>%
+  column_to_rownames(., "genome") %>%
+  hillpair(., q = 1, dist = dist)
+```
+
+### Richness (q0n)
+
+```{r adonis_q0n, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+betadisper(beta_q0n$C, sample_metadata %>% 
+             filter(sample %in% labels(beta_q0n$C)) %>% 
+             arrange(match(sample,labels(beta_q0n$C))) %>% 
+             pull(species)) %>%
+             permutest(., pairwise = TRUE) %>% 
+             pluck("tab") %>% 
+             tt(caption = "Homogeneity of variances")
+
+adonis2(beta_q0n$C ~ species, 
+        data = sample_metadata %>% 
+                filter(sample %in% labels(beta_q0n$C)) %>% 
+                arrange(match(sample,labels(beta_q0n$C))), 
+        permutations = 999) %>%
+  broom::tidy() %>%
+  tt(caption = "Permanova")
+```
+
+```{r beta_div_q0n_plot, comment="", message=FALSE, warning=FALSE, fig.height=8, fig.width=10, fig.fullwidth=TRUE}
+beta_q0n$C %>%
+  vegan::metaMDS(., trymax = 500, k = 2, trace = 0) %>%
+  vegan::scores() %>%
+  as_tibble(., rownames = "sample") %>%
+  dplyr::left_join(sample_metadata, by = join_by(sample == sample)) %>%
+  group_by(species) %>%
+  mutate(x_cen = mean(NMDS1, na.rm = TRUE)) %>%
+  mutate(y_cen = mean(NMDS2, na.rm = TRUE)) %>%
+  ungroup() %>%
+  ggplot(aes(x = NMDS1, y = NMDS2, color = species)) +
+    scale_color_manual(values = c("#e5bd5b", "#6b7398","#e2815a")) +
+    scale_shape_manual(values = 1:10) +
+    geom_point(size = 4) +
+    #   stat_ellipse(aes(color = beta_q1n_nmds$Groups))+
+    geom_segment(aes(x = x_cen, y = y_cen, xend = NMDS1, yend = NMDS2), alpha = 0.9) +
+    theme_classic() +
+    theme(
+      axis.text.x = element_text(size = 12),
+      axis.text.y = element_text(size = 12),
+      axis.title = element_text(size = 20, face = "bold"),
+      axis.text = element_text(face = "bold", size = 18),
+      panel.background = element_blank(),
+      axis.line = element_line(size = 0.5, linetype = "solid", colour = "black"),
+      legend.text = element_text(size = 16),
+      legend.title = element_text(size = 18),
+      legend.position = "right", legend.box = "vertical"
+    )
+```
+
+### Neutral (q1n)
+
+```{r adonis_q1n, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+betadisper(beta_q1n$C, sample_metadata %>% 
+             filter(sample %in% labels(beta_q1n$C)) %>% 
+             arrange(match(sample,labels(beta_q1n$C))) %>% 
+             pull(species)) %>%
+             permutest(., pairwise = TRUE) %>% 
+             pluck("tab") %>% 
+             tt(caption = "Homogeneity of variances")
+
+adonis2(beta_q1n$C ~ species, 
+        data = sample_metadata %>% 
+                filter(sample %in% labels(beta_q1n$C)) %>% 
+                arrange(match(sample,labels(beta_q1n$C))), 
+        permutations = 999) %>%
+  broom::tidy() %>%
+  tt(caption = "Permanova")
+```
+
+```{r beta_div_q1n_plot, comment="", message=FALSE, warning=FALSE, fig.height=8, fig.width=10, fig.fullwidth=TRUE}
+beta_q1n$C %>%
+  vegan::metaMDS(., trymax = 500, k = 2, trace = 0) %>%
+  vegan::scores() %>%
+  as_tibble(., rownames = "sample") %>%
+  dplyr::left_join(sample_metadata, by = join_by(sample == sample)) %>%
+  group_by(species) %>%
+  mutate(x_cen = mean(NMDS1, na.rm = TRUE)) %>%
+  mutate(y_cen = mean(NMDS2, na.rm = TRUE)) %>%
+  ungroup() %>%
+  ggplot(aes(x = NMDS1, y = NMDS2, color = species)) +
+    scale_color_manual(values = c("#e5bd5b", "#6b7398","#e2815a")) +
+    scale_shape_manual(values = 1:10) +
+    geom_point(size = 4) +
+    #   stat_ellipse(aes(color = beta_q1n_nmds$Groups))+
+    geom_segment(aes(x = x_cen, y = y_cen, xend = NMDS1, yend = NMDS2), alpha = 0.9) +
+    theme_classic() +
+    theme(
+      axis.text.x = element_text(size = 12),
+      axis.text.y = element_text(size = 12),
+      axis.title = element_text(size = 20, face = "bold"),
+      axis.text = element_text(face = "bold", size = 18),
+      panel.background = element_blank(),
+      axis.line = element_line(size = 0.5, linetype = "solid", colour = "black"),
+      legend.text = element_text(size = 16),
+      legend.title = element_text(size = 18),
+      legend.position = "right", legend.box = "vertical"
+    )
+```
+
+### Phylogenetic (q1p)
+
+```{r adonis_q1p, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+betadisper(beta_q1p$C, sample_metadata %>% 
+             filter(sample %in% labels(beta_q1p$C)) %>% 
+             arrange(match(sample,labels(beta_q1p$C))) %>% 
+             pull(species)) %>%
+             permutest(., pairwise = TRUE) %>% 
+             pluck("tab") %>% 
+             tt(caption = "Homogeneity of variances")
+
+adonis2(beta_q1p$C ~ species, 
+        data = sample_metadata %>% 
+                filter(sample %in% labels(beta_q1p$C)) %>% 
+                arrange(match(sample,labels(beta_q1p$C))), 
+        permutations = 999) %>%
+  broom::tidy() %>%
+  tt(caption = "Permanova")
+```
+
+```{r beta_div_q1p_plot, comment="", message=FALSE, warning=FALSE, fig.height=8, fig.width=10, fig.fullwidth=TRUE}
+beta_q1p$C %>%
+  vegan::metaMDS(., trymax = 500, k = 2, trace = 0) %>%
+  vegan::scores() %>%
+  as_tibble(., rownames = "sample") %>%
+  dplyr::left_join(sample_metadata, by = join_by(sample == sample)) %>%
+  group_by(species) %>%
+  mutate(x_cen = mean(NMDS1, na.rm = TRUE)) %>%
+  mutate(y_cen = mean(NMDS2, na.rm = TRUE)) %>%
+  ungroup() %>%
+  ggplot(aes(x = NMDS1, y = NMDS2, color = species)) +
+    scale_color_manual(values = c("#e5bd5b", "#6b7398","#e2815a")) +
+    scale_shape_manual(values = 1:10) +
+    geom_point(size = 4) +
+    #   stat_ellipse(aes(color = beta_q1n_nmds$Groups))+
+    geom_segment(aes(x = x_cen, y = y_cen, xend = NMDS1, yend = NMDS2), alpha = 0.9) +
+    theme_classic() +
+    theme(
+      axis.text.x = element_text(size = 12),
+      axis.text.y = element_text(size = 12),
+      axis.title = element_text(size = 20, face = "bold"),
+      axis.text = element_text(face = "bold", size = 18),
+      panel.background = element_blank(),
+      axis.line = element_line(size = 0.5, linetype = "solid", colour = "black"),
+      legend.text = element_text(size = 16),
+      legend.title = element_text(size = 18),
+      legend.position = "right", legend.box = "vertical"
+    )
+```
+
+### Functional (q1f)
+
+```{r adonis_q1f, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+betadisper(beta_q1f$C, sample_metadata %>% 
+             filter(sample %in% labels(beta_q1f$C)) %>% 
+             arrange(match(sample,labels(beta_q1f$C))) %>% 
+             pull(species)) %>%
+             permutest(., pairwise = TRUE) %>% 
+             pluck("tab") %>% 
+             tt(caption = "Homogeneity of variances")
+
+adonis2(beta_q1f$C ~ species, 
+        data = sample_metadata %>% 
+                filter(sample %in% labels(beta_q1f$C)) %>% 
+                arrange(match(sample,labels(beta_q1f$C))), 
+        permutations = 999) %>%
+  broom::tidy() %>%
+  tt(caption = "Permanova")
+```
+
+```{r beta_div_q1f_plot, comment="", message=FALSE, warning=FALSE, fig.height=8, fig.width=10, fig.fullwidth=TRUE}
+beta_q1f$C %>%
+  vegan::metaMDS(., trymax = 500, k = 2, trace = 0) %>%
+  vegan::scores() %>%
+  as_tibble(., rownames = "sample") %>%
+  dplyr::left_join(sample_metadata, by = join_by(sample == sample)) %>%
+  group_by(species) %>%
+  mutate(x_cen = mean(NMDS1, na.rm = TRUE)) %>%
+  mutate(y_cen = mean(NMDS2, na.rm = TRUE)) %>%
+  ungroup() %>%
+  ggplot(aes(x = NMDS1, y = NMDS2, color = species)) +
+    scale_color_manual(values = c("#e5bd5b", "#6b7398","#e2815a")) +
+    scale_shape_manual(values = 1:10) +
+    geom_point(size = 4) +
+    #   stat_ellipse(aes(color = beta_q1n_nmds$Groups))+
+    geom_segment(aes(x = x_cen, y = y_cen, xend = NMDS1, yend = NMDS2), alpha = 0.9) +
+    theme_classic() +
+    theme(
+      axis.text.x = element_text(size = 12),
+      axis.text.y = element_text(size = 12),
+      axis.title = element_text(size = 20, face = "bold"),
+      axis.text = element_text(face = "bold", size = 18),
+      panel.background = element_blank(),
+      axis.line = element_line(size = 0.5, linetype = "solid", colour = "black"),
+      legend.text = element_text(size = 16),
+      legend.title = element_text(size = 18),
+      legend.position = "right", legend.box = "vertical"
+    )
+```

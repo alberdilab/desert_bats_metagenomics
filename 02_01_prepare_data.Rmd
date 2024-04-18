@@ -33,16 +33,18 @@ genome_taxonomy <- read_tsv("data/metagenomics/genome_taxonomy.tsv") %>%
       mutate(genome = str_remove(genome, "\\.fa$"))
 ```
 
-### Genome length
+### Genome quality
 
 ```{r load_genome_length, warning=FALSE, comments="", message=FALSE}
-genome_length <- read_tsv("data/metagenomics/genome_length.tsv")
+genome_quality <- read_tsv("data/metagenomics/genome_quality.tsv")
 ```
 
 ### Genome metadata
 
 ```{r generate_genome_metadata, warning=FALSE, comments="", message=FALSE}
-genome_metadata <- inner_join(genome_taxonomy,genome_length,by=join_by(genome==genome))
+genome_metadata <- inner_join(genome_taxonomy,genome_quality,by=join_by(genome==genome)) %>%
+    select(-c(lineage,binner)) %>%
+    rename(length=size)
 ```
 
 ### Genome tree
@@ -56,7 +58,10 @@ genome_tree <- keep.tip(genome_tree, tip=genome_taxonomy$genome) # keep only MAG
 
 ### Genome annotations
 
-TO BE ADDED
+```{r load_genome_annotations, warning=FALSE, comments="", message=FALSE}
+genome_annotations <- read_tsv("data/metagenomics/genome_annotations.tsv.xz") %>%
+    rename(gene=1, genome=2, contig=3)
+```
 
 ### Preprocessing statistics
 
@@ -94,8 +99,8 @@ genome_counts_filt <- read_counts_filt %>%
 
 ### Distill annotations into GIFTs 
 
-```{r distill_annotations, warning=FALSE, comments="", message=FALSE, eval=FALSE}
-#genome_gifts <- distill(genome_annotations,GIFT_db,genomecol=2,annotcol=c(9,10,19), verbosity=F)
+```{r distill_annotations, warning=FALSE, comments="", message=FALSE}
+genome_gifts <- distill(genome_annotations,GIFT_db,genomecol=2,annotcol=c(9,10,19), verbosity=F)
 ```
 
 ## Prepare color scheme
@@ -124,6 +129,7 @@ save(sample_metadata,
      genome_counts, 
      genome_counts_filt, 
      genome_tree,
+     genome_gifts,
      phylum_colors,
      file = "data/data.Rdata")
 ```

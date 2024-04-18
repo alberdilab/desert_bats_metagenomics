@@ -3,6 +3,9 @@ title: "AlberdiLab | Aizpurua et al. in prep"
 subtitle: "Desert bats metagenomics"
 author:
   - Ostaizka Aizpurua^[University of Copenhagen, ostaizka.aizpurua@sund.ku.dk]
+  - Evie Morris
+  - Raphael Eisenhofer^[University of Copenhagen, raphael.eisenhofer@sund.ku.dk]
+  - Lasse Nyholm
   - Antton Alberdi^[University of Copenhagen, antton.alberdi@sund.ku.dk]
   - Orly Razgour^[University of Exeter, o.razgour@exeter.ac.uk]
 
