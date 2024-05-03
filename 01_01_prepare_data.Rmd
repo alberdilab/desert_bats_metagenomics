@@ -5,4 +5,155 @@
 
 Load the original data files outputted by the bioinformatic pipeline. 
 
-To be added
+### Sample metadata
+
+```{r load_sample_metadata, warning=FALSE, comments="", message=FALSE}
+sample_metadata <- read_tsv("data/sample_metadata.tsv")
+```
+
+### ASV counts
+
+```{r load_asv_counts, warning=FALSE, comments="", message=FALSE}
+asv_counts <- read_tsv("data/amplicon/asv_counts.tsv")
+```
+
+### ASV taxonomy
+
+```{r load_asv_taxonomy, warning=FALSE, comments="", message=FALSE}
+asv_taxonomy <- read_tsv("data/amplicon/asv_taxonomy.tsv") %>%
+    mutate(phylum = case_when(
+        phylum == "Actinobacteriota" ~ "Actinomycetota",
+        (phylum == "Firmicutes" & class == "Bacilli") ~ "Bacillota",
+        (phylum == "Firmicutes" & class == "Clostridia") ~ "Bacillota_A",
+        phylum == "Proteobacteria" ~ "Pseudomonadota",
+        TRUE ~ phylum))
+```
+
+### ASV tree
+
+```{r load_asv_tree, warning=FALSE, comments="", message=FALSE}
+asv_tree <- read_tree("data/amplicon/asv_tree.tre")
+```
+
+### Phyloseq object
+
+```{r generate_phyloseq, warning=FALSE, comments="", message=FALSE, eval=FALSE}
+amplicon_phyloseq <- phyloseq(
+  otu_table(asv_counts%>% column_to_rownames(var="asv"), taxa_are_rows = TRUE), 
+  tax_table(asv_taxonomy %>%
+    column_to_rownames(var="asv") %>% 
+    as.matrix()), 
+  sample_data(sample_metadata) %>% column_to_rownames(var="sample"))
+```
+
+
+```{r get_ehi_colors, warning=FALSE, comments="", message=FALSE}
+phylum_colors <- read_tsv("https://raw.githubusercontent.com/earthhologenome/EHI_taxonomy_colour/main/ehi_phylum_colors.tsv") %>%
+    mutate(phylum = str_remove(phylum, "p__")) %>%
+    right_join(asv_taxonomy, by=join_by(phylum == phylum)) %>%
+    arrange(match(asv, asv_tree$tip.label)) %>%
+    select(phylum, colors) %>% 
+    unique() %>%
+    arrange(phylum) %>%
+    pull(colors, name=phylum)
+```
+
+## ASV phylogeny
+
+```{r asv_phylogeny, message=FALSE, warning=FALSE, fig.height=10, fig.width=10, fig.fullwidth=TRUE}
+# Generate the phylum color heatmap
+phylum_heatmap <- read_tsv("https://raw.githubusercontent.com/earthhologenome/EHI_taxonomy_colour/main/ehi_phylum_colors.tsv") %>%
+    right_join(asv_taxonomy, by=join_by(phylum == phylum)) %>%
+    arrange(match(asv, asv_tree$tip.label)) %>%
+    select(asv,phylum) %>%
+    mutate(phylum = factor(phylum, levels = unique(phylum))) %>%
+    column_to_rownames(var = "asv")
+
+asv_tree_ultrametric <- asv_tree %>% 
+    keep.tip(., tip=sample(asv_tree$tip.label, 500)) %>% #subsample for the sake of visualisation
+    drop.tip(., tip=c("ASV_6645","ASV_6419")) %>%
+    force.ultrametric(asv_tree, method="extend")
+tip_branches <- asv_tree_ultrametric$edge.length[sapply(1:length(asv_tree_ultrametric$tip.label),function(x,y) which (y==x),y=asv_tree_ultrametric$edge[,2])]
+tip_branches_new <- pmax(0,tip_branches - min(tip_branches))
+asv_tree_ultrametric$edge.length[sapply(1:length(asv_tree_ultrametric$tip.label),function(x,y) which (y==x),y=asv_tree_ultrametric$edge[,2])]  <- tip_branches_new
+
+# Generate  basal tree
+circular_tree <- asv_tree_ultrametric %>% # extend to ultrametric for the sake of visualisation
+    ggtree(., layout="fan", open.angle=10, size=0.2)
+
+# Add phylum ring
+circular_tree <- gheatmap(circular_tree, phylum_heatmap, offset=0.55, width=0.1, colnames=FALSE) +
+        scale_fill_manual(values=phylum_colors) +
+        geom_tiplab2(size=1, hjust=-0.1) +
+        theme(legend.position = "none", plot.margin = margin(0, 0, 0, 0), panel.margin = margin(0, 0, 0, 0))
+
+# Flush color scale to enable a new color scheme in the next ring
+circular_tree <- circular_tree + new_scale_fill()
+
+#Plot circular tree
+circular_tree %>% open_tree(30) %>% rotate_tree(90)
+```
+
+
+### Taxonomy barplot
+
+```{r taxonomy_barplot_asv, warning=FALSE, comments="", message=FALSE}
+asv_counts %>%
+  mutate_at(vars(-asv),~./sum(.)) %>%
+  pivot_longer(-asv, names_to = "sample", values_to = "count") %>%
+  left_join(asv_taxonomy, by = join_by(asv == asv)) %>%
+  left_join(sample_metadata, by = join_by(sample == sample)) %>%
+  
+  ggplot(aes(y=count,x=sample, fill=phylum, group=phylum)) + #grouping enables keeping the same sorting of taxonomic units
+    geom_bar(stat="identity", colour="white", linewidth=0.1) + #plot stacked bars with white borders
+    scale_fill_manual(values=phylum_colors) +
+    labs(x = "Relative abundance", y ="Samples") +
+    facet_nested(. ~ bat_species,  scales="free", space="free") + #facet per day and treatment
+    scale_y_continuous(expand = c(0.001, 0.001)) +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+          axis.title.x = element_blank(),
+          panel.background = element_blank(),
+          panel.border = element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          axis.line = element_line(linewidth = 0.5, linetype = "solid", colour = "black"),
+          legend.position = "none",
+          strip.background.x=element_rect(color = NA, fill= "#f4f4f4"))
+```
+
+## Alpha diversity
+
+```{r alpha_div_asv, comment="", message=FALSE, warning=FALSE}
+# Calculate Hill numbers
+richness <- asv_counts %>%
+  column_to_rownames(var = "asv") %>%
+  dplyr::select(where(~ !all(. == 0))) %>%
+  hilldiv(., q = 0) %>%
+  t() %>%
+  as.data.frame() %>%
+  dplyr::rename(richness = 1) %>%
+  rownames_to_column(var = "sample")
+
+neutral <- asv_counts %>%
+  column_to_rownames(var = "asv") %>%
+  dplyr::select(where(~ !all(. == 0))) %>%
+  hilldiv(., q = 1) %>%
+  t() %>%
+  as.data.frame() %>%
+  dplyr::rename(neutral = 1) %>%
+  rownames_to_column(var = "sample")
+
+phylogenetic <- asv_counts %>%
+  column_to_rownames(var = "asv") %>%
+  dplyr::select(where(~ !all(. == 0))) %>%
+  hilldiv(., q = 1, tree = asv_tree) %>%
+  t() %>%
+  as.data.frame() %>%
+  dplyr::rename(phylogenetic = 1) %>%
+  rownames_to_column(var = "sample")
+
+# Merge all metrics
+alpha_div_amplicon <- richness %>%
+  full_join(neutral, by = join_by(sample == sample)) %>%
+  full_join(phylogenetic, by = join_by(sample == sample))
+```

@@ -4,9 +4,17 @@ environment
 libraries
 prepare-data
 load-data
+sample-metadata
+asv-counts
+asv-taxonomy
+asv-tree
+phyloseq-object
+asv-phylogeny
+taxonomy-barplot
+alpha-diversity
 prepare-data-1
 load-data-1
-sample-metadata
+sample-metadata-1
 read-counts
 genome-coverage
 genome-taxonomy
@@ -35,7 +43,7 @@ taxonomy-boxplot
 family
 genus
 diversity
-alpha-diversity
+alpha-diversity-1
 beta-diversity
 richness-q0n
 neutral-q1n

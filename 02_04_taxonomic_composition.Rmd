@@ -1,7 +1,7 @@
 # Taxonomic composition
 
 ```{r load_data_composition, message=FALSE, warning=FALSE}
-load("data/data.Rdata")
+load("data/metagenomics/data.Rdata")
 ```
 
 ### Taxonomy barplot per individual
@@ -17,7 +17,7 @@ genome_counts_filt %>%
     geom_bar(stat="identity", colour="white", linewidth=0.1) + #plot stacked bars with white borders
     scale_fill_manual(values=phylum_colors) +
     labs(x = "Relative abundance", y ="Samples") +
-    facet_nested(. ~ species.y,  scales="free", space="free") + #facet per day and treatment
+    facet_nested(. ~ bat_species,  scales="free", space="free") + #facet per day and treatment
     scale_y_continuous(expand = c(0.001, 0.001)) +
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
           axis.title.x = element_blank(),
@@ -73,7 +73,7 @@ family_summary %>%
         scale_fill_manual(values=phylum_colors[-8]) +
         geom_boxplot(alpha=0.2) +
         geom_jitter(alpha=0.5) + 
-        facet_nested(. ~ species)+
+        facet_nested(. ~ bat_species)+
         theme_minimal() +
         theme(legend.position = "none")
 ```
@@ -119,7 +119,7 @@ genus_summary %>%
         scale_color_manual(values=phylum_colors) +
         #geom_boxplot() +
         geom_jitter(alpha=0.5) + 
-        facet_nested(. ~ species)+
+        facet_nested(. ~ bat_species)+
         theme_minimal()
 
 ```

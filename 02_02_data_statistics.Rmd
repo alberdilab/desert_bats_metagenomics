@@ -1,7 +1,7 @@
 # Data statistics
 
 ```{r load_data_stats}
-load("data/data.Rdata")
+load("data/metagenomics/data.Rdata")
 ```
 
 ## Sequencing reads statistics
@@ -54,7 +54,7 @@ sequence_fractions %>%
 ```{r samples_host_samples, comment="", echo=FALSE, message=FALSE, warning=FALSE}
 left_join(sample_preprocessing, sample_metadata, by=join_by(sample==sample)) %>%
   mutate(host_perc=host_reads/reads_pre_filt*100)  %>% 
-  group_by(species) %>% 
+  group_by(bat_species) %>% 
   summarise(
     mean_host_perc = mean(host_perc, na.rm = TRUE),
     sd_host_perc = sd(host_perc, na.rm = TRUE),

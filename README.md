@@ -2,7 +2,7 @@
 Code repository of the 16S vs genome-resolved metagenomics in desert bats
 
 **[Title to be added]**
-Ostaizka Aizpurua, Evie Morris, Raphael Eisenhofer, Antton Alberdi, Orly Razgour
+Ostaizka Aizpurua, Evie Morris, Raphael Eisenhofer, Lasse Nyholm, Antton Alberdi, Orly Razgour
 
 ## Analysis procedures
 

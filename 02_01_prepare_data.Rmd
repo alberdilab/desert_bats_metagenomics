@@ -7,8 +7,8 @@ Load the original data files outputted by the bioinformatic pipeline.
 
 ### Sample metadata
 
-```{r load_sample_metadata, warning=FALSE, comments="", message=FALSE}
-sample_metadata <- read_tsv("data/metagenomics/sample_metadata.tsv")
+```{r load_sample_metadata2, warning=FALSE, comments="", message=FALSE}
+sample_metadata <- read_tsv("data/sample_metadata.tsv")
 ```
 
 ### Read counts
@@ -107,7 +107,7 @@ genome_gifts <- distill(genome_annotations,GIFT_db,genomecol=2,annotcol=c(9,10,1
 
 [AlberdiLab](www.alberdilab.dk) projects use unified color schemes developed for the [Earth Hologenome Initiative](www.earthhologenome.org), to facilitate figure interpretation.
 
-```{r get_ehi_colors, warning=FALSE, comments="", message=FALSE}
+```{r get_ehi_colors2, warning=FALSE, comments="", message=FALSE}
 phylum_colors <- read_tsv("https://raw.githubusercontent.com/earthhologenome/EHI_taxonomy_colour/main/ehi_phylum_colors.tsv") %>%
     right_join(genome_metadata, by=join_by(phylum == phylum)) %>%
     arrange(match(genome, genome_tree$tip.label)) %>%
@@ -131,5 +131,5 @@ save(sample_metadata,
      genome_tree,
      genome_gifts,
      phylum_colors,
-     file = "data/data.Rdata")
+     file = "data/metagenomics/data.Rdata")
 ```

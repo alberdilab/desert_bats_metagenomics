@@ -1,7 +1,7 @@
 # Diversity
 
 ```{r load_data_diversity, message=FALSE, warning=FALSE}
-load("data/data.Rdata")
+load("data/metagenomics/data.Rdata")
 ```
 
 ## Alpha diversity
@@ -40,39 +40,39 @@ dist <- genome_gifts %>%
   to.elements(., GIFT_db) %>%
   traits2dist(., method = "gower")
 
-functional <- genome_counts_filt %>%
-  filter(genome %in% labels(dist)[[1]]) %>%
-  column_to_rownames(var = "genome") %>%
-  dplyr::select(where(~ !all(. == 0))) %>%
-  hilldiv(., q = 1, dist = dist) %>%
-  t() %>%
-  as.data.frame() %>%
-  dplyr::rename(functional = 1) %>%
-  rownames_to_column(var = "sample") %>%
-  mutate(functional = if_else(is.nan(functional), 1, functional))
+#functional <- genome_counts_filt %>%
+#  filter(genome %in% labels(dist)[[1]]) %>%
+#  column_to_rownames(var = "genome") %>%
+#  dplyr::select(where(~ !all(. == 0))) %>%
+#  hilldiv(., q = 1, dist = dist) %>%
+#  t() %>%
+#  as.data.frame() %>%
+#  dplyr::rename(functional = 1) %>%
+#  rownames_to_column(var = "sample") %>%
+#  mutate(functional = if_else(is.nan(functional), 1, functional))
 
 # Merge all metrics
-alpha_div <- richness %>%
+alpha_div_metagenomics <- richness %>%
   full_join(neutral, by = join_by(sample == sample)) %>%
-  full_join(phylogenetic, by = join_by(sample == sample)) %>%
-  full_join(functional, by = join_by(sample == sample))
+  full_join(phylogenetic, by = join_by(sample == sample)) #%>%
+  #full_join(functional, by = join_by(sample == sample))
 ```
 
 ```{r alpha_div_plot, comment="", message=FALSE, warning=FALSE, fig.height=3, fig.width=10, fig.fullwidth=TRUE}
-alpha_div %>%
+alpha_div_metagenomics %>%
   pivot_longer(-sample, names_to = "metric", values_to = "value") %>%
   left_join(., sample_metadata, by = join_by(sample == sample)) %>%
   mutate(metric=factor(metric,levels=c("richness","neutral","phylogenetic","functional"))) %>%
-      ggplot(aes(y = value, x = species, group=species, color=species, fill=species)) +
+      ggplot(aes(y = value, x = bat_species, group=bat_species, color=bat_species, fill=bat_species)) +
       geom_boxplot(outlier.shape = NA) +
       geom_jitter(alpha=0.5) +
       scale_color_manual(name="Species",
-          breaks=c("Pk","Eb","Ha"),
-          labels=c("Pipistrellus kuhlii","Eptesicus bottaew","Hipsugo ariel"),
+          breaks=c("Pipistrellus kuhlii","Eptesicus bottae","Hypsugo ariel"),
+          labels=c("Pipistrellus kuhlii","Eptesicus bottae","Hypsugo ariel"),
           values=c("#e5bd5b", "#6b7398","#e2815a")) +
       scale_fill_manual(name="Species",
-          breaks=c("Pk","Eb","Ha"),
-          labels=c("Pipistrellus kuhlii","Eptesicus bottaew","Hipsugo ariel"),
+          breaks=c("Pipistrellus kuhlii","Eptesicus bottae","Hypsugo ariel"),
+          labels=c("Pipistrellus kuhlii","Eptesicus bottae","Hypsugo ariel"),
           values=c("#e5bd5b50", "#6b739850","#e2815a50")) +
       facet_wrap(. ~ metric, scales = "free", ncol=4) +
       coord_cartesian(xlim = c(1, NA)) +
@@ -116,12 +116,12 @@ beta_q1f <- genome_counts %>%
 betadisper(beta_q0n$C, sample_metadata %>% 
              filter(sample %in% labels(beta_q0n$C)) %>% 
              arrange(match(sample,labels(beta_q0n$C))) %>% 
-             pull(species)) %>%
+             pull(bat_species)) %>%
              permutest(., pairwise = TRUE) %>% 
              pluck("tab") %>% 
              tt(caption = "Homogeneity of variances")
 
-adonis2(beta_q0n$C ~ species, 
+adonis2(beta_q0n$C ~ bat_species, 
         data = sample_metadata %>% 
                 filter(sample %in% labels(beta_q0n$C)) %>% 
                 arrange(match(sample,labels(beta_q0n$C))), 
@@ -136,11 +136,11 @@ beta_q0n$C %>%
   vegan::scores() %>%
   as_tibble(., rownames = "sample") %>%
   dplyr::left_join(sample_metadata, by = join_by(sample == sample)) %>%
-  group_by(species) %>%
+  group_by(bat_species) %>%
   mutate(x_cen = mean(NMDS1, na.rm = TRUE)) %>%
   mutate(y_cen = mean(NMDS2, na.rm = TRUE)) %>%
   ungroup() %>%
-  ggplot(aes(x = NMDS1, y = NMDS2, color = species)) +
+  ggplot(aes(x = NMDS1, y = NMDS2, color = bat_species)) +
     scale_color_manual(values = c("#e5bd5b", "#6b7398","#e2815a")) +
     scale_shape_manual(values = 1:10) +
     geom_point(size = 4) +
@@ -166,12 +166,12 @@ beta_q0n$C %>%
 betadisper(beta_q1n$C, sample_metadata %>% 
              filter(sample %in% labels(beta_q1n$C)) %>% 
              arrange(match(sample,labels(beta_q1n$C))) %>% 
-             pull(species)) %>%
+             pull(bat_species)) %>%
              permutest(., pairwise = TRUE) %>% 
              pluck("tab") %>% 
              tt(caption = "Homogeneity of variances")
 
-adonis2(beta_q1n$C ~ species, 
+adonis2(beta_q1n$C ~ bat_species, 
         data = sample_metadata %>% 
                 filter(sample %in% labels(beta_q1n$C)) %>% 
                 arrange(match(sample,labels(beta_q1n$C))), 
@@ -186,11 +186,11 @@ beta_q1n$C %>%
   vegan::scores() %>%
   as_tibble(., rownames = "sample") %>%
   dplyr::left_join(sample_metadata, by = join_by(sample == sample)) %>%
-  group_by(species) %>%
+  group_by(bat_species) %>%
   mutate(x_cen = mean(NMDS1, na.rm = TRUE)) %>%
   mutate(y_cen = mean(NMDS2, na.rm = TRUE)) %>%
   ungroup() %>%
-  ggplot(aes(x = NMDS1, y = NMDS2, color = species)) +
+  ggplot(aes(x = NMDS1, y = NMDS2, color = bat_species)) +
     scale_color_manual(values = c("#e5bd5b", "#6b7398","#e2815a")) +
     scale_shape_manual(values = 1:10) +
     geom_point(size = 4) +
@@ -216,12 +216,12 @@ beta_q1n$C %>%
 betadisper(beta_q1p$C, sample_metadata %>% 
              filter(sample %in% labels(beta_q1p$C)) %>% 
              arrange(match(sample,labels(beta_q1p$C))) %>% 
-             pull(species)) %>%
+             pull(bat_species)) %>%
              permutest(., pairwise = TRUE) %>% 
              pluck("tab") %>% 
              tt(caption = "Homogeneity of variances")
 
-adonis2(beta_q1p$C ~ species, 
+adonis2(beta_q1p$C ~ bat_species, 
         data = sample_metadata %>% 
                 filter(sample %in% labels(beta_q1p$C)) %>% 
                 arrange(match(sample,labels(beta_q1p$C))), 
@@ -236,11 +236,11 @@ beta_q1p$C %>%
   vegan::scores() %>%
   as_tibble(., rownames = "sample") %>%
   dplyr::left_join(sample_metadata, by = join_by(sample == sample)) %>%
-  group_by(species) %>%
+  group_by(bat_species) %>%
   mutate(x_cen = mean(NMDS1, na.rm = TRUE)) %>%
   mutate(y_cen = mean(NMDS2, na.rm = TRUE)) %>%
   ungroup() %>%
-  ggplot(aes(x = NMDS1, y = NMDS2, color = species)) +
+  ggplot(aes(x = NMDS1, y = NMDS2, color = bat_species)) +
     scale_color_manual(values = c("#e5bd5b", "#6b7398","#e2815a")) +
     scale_shape_manual(values = 1:10) +
     geom_point(size = 4) +
@@ -266,12 +266,12 @@ beta_q1p$C %>%
 betadisper(beta_q1f$C, sample_metadata %>% 
              filter(sample %in% labels(beta_q1f$C)) %>% 
              arrange(match(sample,labels(beta_q1f$C))) %>% 
-             pull(species)) %>%
+             pull(bat_species)) %>%
              permutest(., pairwise = TRUE) %>% 
              pluck("tab") %>% 
              tt(caption = "Homogeneity of variances")
 
-adonis2(beta_q1f$C ~ species, 
+adonis2(beta_q1f$C ~ bat_species, 
         data = sample_metadata %>% 
                 filter(sample %in% labels(beta_q1f$C)) %>% 
                 arrange(match(sample,labels(beta_q1f$C))), 
@@ -286,11 +286,11 @@ beta_q1f$C %>%
   vegan::scores() %>%
   as_tibble(., rownames = "sample") %>%
   dplyr::left_join(sample_metadata, by = join_by(sample == sample)) %>%
-  group_by(species) %>%
+  group_by(bat_species) %>%
   mutate(x_cen = mean(NMDS1, na.rm = TRUE)) %>%
   mutate(y_cen = mean(NMDS2, na.rm = TRUE)) %>%
   ungroup() %>%
-  ggplot(aes(x = NMDS1, y = NMDS2, color = species)) +
+  ggplot(aes(x = NMDS1, y = NMDS2, color = bat_species)) +
     scale_color_manual(values = c("#e5bd5b", "#6b7398","#e2815a")) +
     scale_shape_manual(values = 1:10) +
     geom_point(size = 4) +
